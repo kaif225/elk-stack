@@ -1,14 +1,34 @@
-version: "2.4"
+version: "3.8"
 
 services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.0.1
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.monitoring.collection.enabled=true
+      - bootstrap.memory_lock=true
+      - ES_JAVA_OPTS="-Xms512m -Xmx512m"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    networks:
+      - elastic
+
   filebeat:
     image: docker.elastic.co/beats/filebeat:8.0.1
-    build: filebeat
+    build: ./filebeat
     container_name: filebeat
     hostname: mydockerhost
     restart: unless-stopped
     environment:
-      - ELASTICSEARCH_HOSTS=https://testelk.es.us-central1.gcp.cloud.es.io:9243
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
       - ELASTICSEARCH_USERNAME=elastic
       - ELASTICSEARCH_PASSWORD=lZgjAPYnA3PJhz0bKZDY2gkJ
     labels:
@@ -25,14 +45,17 @@ services:
       options:
         max-size: "10m"
         max-file: "2"
+    networks:
+      - elastic
+
   kibana:
     image: docker.elastic.co/kibana/kibana:7.9.1
     container_name: kibana
     restart: unless-stopped
     environment:
-      - 'ELASTICSEARCH_HOSTS=["http://elasticsearch:9200"]'
-      - "SERVER_NAME=localhost"
-      - "XPACK_MONITORING_ENABLED=false"
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - SERVER_NAME=localhost
+      - XPACK_MONITORING_ENABLED=false
     ports:
       - "5601:5601"
     logging:
@@ -40,5 +63,12 @@ services:
       options:
         max-size: "10m"
         max-file: "2"
+    networks:
+      - elastic
+
 volumes:
   elasticsearch_data:
+
+networks:
+  elastic:
+    driver: bridge

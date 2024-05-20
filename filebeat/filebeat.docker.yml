@@ -7,6 +7,6 @@ filebeat.inputs:
   - add_docker_metadata: ~
 
 output.elasticsearch:
-  hosts: ["https://testelk.es.us-central1.gcp.cloud.es.io:9243"]
+  hosts: ["http://elasticsearch:9200"]
   username: "elastic"
   password: "lZgjAPYnA3PJhz0bKZDY2gkJ"
